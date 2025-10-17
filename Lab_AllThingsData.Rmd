@@ -25,12 +25,13 @@ rm(list=ls(all=TRUE))
 #### Load in libraries #### 
 ## Install and load packages using librarian
 if (!'librarian' %in% installed.packages()) install.packages('librarian')
-librarian::shelf(tidytuesdayR, tidyverse, psych, ggthemes, RColorBrewer, apaTables, wordcloud2)
+librarian::shelf(tidytuesdayR, tidyverse, psych, ggthemes, gridExtra, RColorBrewer, apaTables, wordcloud2)
 ## Package information:
 #tidytuesdayR: Data sets
 #tidyverse: Data manipulation & visualization
 #psych: Descriptive statistics
 #ggthemes: Themes for data viz
+#gridExtra: Arranging graphs
 #RColorBrewer: Colors for data viz
 #apaTables: Correlation table
 #wordcloud2: Word clouds
@@ -175,29 +176,39 @@ spread (variability), and skewness at a glance.
 Do you notice any potential outliers? [Here's how to interpret box plots if you need a refresher.](https://leansigmacorporation.com/box-plot-with-minitab/)
 
 ```{r swift boxplots}
-# Set up a side-by-side layout
-par(mfrow=c(1, 3))
-
-# Create side-by-side boxplots using base R
 # Danceability
-boxplot(x = swift_all_songs$danceability, # specific data
-        main = "Danceability boxplot", # title
-        col = "lavender") # color
+p1 <- ggplot(swift_all_songs, aes(y = danceability)) + ## specify data
+  geom_boxplot(fill = "lavender") + ## specify graph type and fill color
+  ## set axis titles
+  labs(title = "Danceability boxplot", 
+       y = "Danceability Score", 
+       x = NULL) +
+  ## set theme specs
+  theme_minimal() +
+  theme(panel.grid = element_blank()) ## remove gridlines
 
 # Valence
-boxplot(swift_all_songs$valence,  
-        main = "Valence boxplot", 
-        col = "midnightblue") 
+p2 <- ggplot(swift_all_songs, aes(y = valence)) +
+  geom_boxplot(fill = "midnightblue") +
+  labs(title = "Valence boxplot", y = "Valence Score", x = NULL) +
+  theme_minimal() +
+  theme(panel.grid = element_blank())
 
 # Tempo
-boxplot(swift_all_songs$tempo,  
-        main = "Tempo boxplot", 
-        col = "pink") 
+p3 <- ggplot(swift_all_songs, aes(y = tempo)) +
+  geom_boxplot(fill = "pink") +
+  labs(title = "Tempo boxplot", y = "Tempo (BPM)", x = NULL) +
+  theme_minimal() +
+  theme(panel.grid = element_blank())
+
+# Arrange plots side by side
+gridExtra::grid.arrange(p1, p2, p3, ncol = 3)
 ```
 \
 
 4. Box plots are especially useful for comparing distributions across multiple groups.
 Graph danceability, valence, and tempo by era. What do you notice?
+\
 ```{r swift more boxplots}
 # Graph danceability by era
 ggplot(data = swift_all_songs, # specify the data frame
@@ -211,7 +222,8 @@ ggplot(data = swift_all_songs, # specify the data frame
          y = "Danceability") + # y axis label
   scale_fill_brewer(palette = "Accent") + # set color palette
   theme_minimal() + # set theme
-  theme(legend.position = "none",
+  theme(legend.position = "none", # no legend
+        panel.grid = element_blank(), # remove gridlines
         plot.title = element_text(size = 14, face = "bold")) # type face
 
 # View all color options
@@ -230,7 +242,8 @@ ggplot(data = swift_all_songs, # specify the data frame
          y = "Valence") + # y axis label
   scale_fill_brewer(palette = "Set3") + # set color palette
   theme_minimal() + # set theme
-  theme(legend.position = "none",
+  theme(legend.position = "none", # no legend
+        panel.grid = element_blank(), # remove gridlines
         plot.title = element_text(size = 14, face = "bold")) # type face
 
 # Graph tempo by era
@@ -245,7 +258,8 @@ ggplot(data = swift_all_songs, # specify the data frame
          y = "Tempo") + # y axis label
   scale_fill_brewer(palette = "Pastel2") + # set color palette
   theme_minimal() + # set theme
-  theme(legend.position = "none",
+  theme(legend.position = "none", # no legend
+        panel.grid = element_blank(), # remove gridlines
         plot.title = element_text(size = 14, face = "bold")) # type face
 ```
 
@@ -267,7 +281,8 @@ ggplot(data = swift_all_songs, # specify the data source
   geom_smooth(method = "lm", #  specifies a linear model for the line of best fit
               se = FALSE, # removes the default confidence interval band around the line
               color = "grey") + # line color
-  theme_minimal() # theme
+  theme_minimal() +  # theme
+  theme(panel.grid = element_blank()) # remove gridlines
 
 # Danceability x valence scatterplot by era
 ggplot(data = swift_all_songs, # specify the data source
@@ -279,7 +294,8 @@ ggplot(data = swift_all_songs, # specify the data source
   labs(title = "Scatterplot of Valence and Danceability by Era", # title
          x = "Valence", # x axis label
          y = "Danceability") + # y axis label
-  theme_minimal() # theme
+  theme_minimal() +  # theme
+  theme(panel.grid = element_blank()) # remove gridlines
 
 # Danceability x tempo scatterplot
 ggplot(data = swift_all_songs, # specify the data source
@@ -294,7 +310,8 @@ ggplot(data = swift_all_songs, # specify the data source
   geom_smooth(method = "lm", #  specifies a linear model for the line of best fit
               se = FALSE, # removes the default confidence interval band around the line
               color = "black") + # line color
-  theme_minimal() # theme
+  theme_minimal() +  # theme
+  theme(panel.grid = element_blank()) # remove gridlines
 
 # Danceability x tempo scatterplot by era
 ggplot(data = swift_all_songs, # specify the data source
@@ -306,7 +323,8 @@ ggplot(data = swift_all_songs, # specify the data source
   labs(title = "Scatterplot of Tempo and Danceability by Era", # title
          x = "Tempo", # x axis label
          y = "Danceability") + # y axis label
-  theme_minimal() # theme
+  theme_minimal() +  # theme
+  theme(panel.grid = element_blank()) # remove gridlines
 
 # Valence x tempo scatterplot
 ggplot(data = swift_all_songs, # specify the data source
@@ -321,7 +339,8 @@ ggplot(data = swift_all_songs, # specify the data source
   geom_smooth(method = "lm", #  specifies a linear model for the line of best fit
               se = FALSE, # removes the default confidence interval band around the line
               color = "black") + # line color
-  theme_minimal() # theme
+  theme_minimal() +  # theme
+  theme(panel.grid = element_blank()) # remove gridlines
 
 # Valence x tempo scatterplot by era
 ggplot(data = swift_all_songs, # specify the data source
@@ -333,7 +352,8 @@ ggplot(data = swift_all_songs, # specify the data source
   labs(title = "Scatterplot of Valence and Tempo by Era", # title
          x = "Valence", # x axis label
          y = "Tempo") + # y axis label
-  theme_minimal() # theme
+  theme_minimal() +  # theme
+  theme(panel.grid = element_blank()) # remove gridlines
 ```
 
 \
@@ -341,7 +361,7 @@ ggplot(data = swift_all_songs, # specify the data source
 6. Let's create a correlation table of danceability, valence, and tempo to supplement the conclusions that we observed in our scatter plots.
 ```{r swift correlation}
 table1 <- apaTables::apa.cor.table(data=swift_sub,
-                                   table.number=1)
+                                   table.number=1,filename = "taylor_correlations.doc")
 print(table1)
 ```
 
@@ -438,6 +458,7 @@ hist(choc_sub$rating, # specify the variable
 
 3. Now let's examine a box plot of chocolate bar ratings by cocoa percentage.
 What trends do you notice?
+
 ```{r cocoa boxplot}
 # Graph bar rating by cocoa percentage
 ggplot(data = choc_sub, # specify the data frame
@@ -452,6 +473,7 @@ ggplot(data = choc_sub, # specify the data frame
   scale_fill_brewer(palette = "BrBG") + # set color palette
   theme_minimal() + # set theme
   theme(legend.position = "none",
+        panel.grid = element_blank(), # remove gridlines
         plot.title = element_text(size = 14, face = "bold")) # type face
 
 # View all color options
