@@ -411,9 +411,28 @@ These patterns hold across all three eras with no notable differences by group.*
 
 
 ```{r swift correlation}
-table1 <- apaTables::apa.cor.table(data=swift_sub,
-                                   table.number=1,filename = "taylor_correlations.doc")
-print(table1)
+corr_results <- psych::corr.test(swift_sub)
+
+corr_matrix <- as.data.frame(corr_results$r) %>%
+  round(2)
+
+# Replace upper triangle with p-value stars
+p_mat <- corr_results$p
+corr_matrix[upper.tri(corr_matrix)] <- ifelse(p_mat[upper.tri(p_mat)] < .01, 
+                                                paste0(round(corr_results$r[upper.tri(corr_results$r)], 2), "**"),
+                                         ifelse(p_mat[upper.tri(p_mat)] < .05,
+                                                paste0(round(corr_results$r[upper.tri(corr_results$r)], 2), "*"),
+                                                round(corr_results$r[upper.tri(corr_results$r)], 2)))
+
+# Blank out lower triangle
+corr_matrix[lower.tri(corr_matrix)] <- ""
+diag(corr_matrix) <- "--"
+
+knitr::kable(corr_matrix, 
+             caption = "Table 3. Correlations Among Danceability, Valence, and Tempo") %>%
+  kableExtra::kable_styling(bootstrap_options = c("striped", "hover"), 
+                            full_width = FALSE) %>%
+  kableExtra::footnote(general = "* p < .05. ** p < .01.")
 ```
 
 
