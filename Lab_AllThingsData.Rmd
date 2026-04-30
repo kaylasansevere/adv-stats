@@ -49,9 +49,9 @@ set.seed(207)
 This dataset contains audio features for Taylor Swift's discography, 
 sourced from Spotify's API via the [#TidyTuesday](https://github.com/rfordatascience/tidytuesday) open data project. 
 Spotify automatically generates scores for each track measuring 
-characteristics like how danceable (ranges from $0$ - least danceable to $100$ - most danceable), 
-emotionally negative or positive (ranges from $0$ - low valence, sounds more negative... sad, depressed, angry 
-to $100$ - high valence, sounds more positive... happy, cheerful, euphoric), or fast a 
+characteristics like how danceable (ranges from 0 - least danceable to 100 - most danceable), 
+emotionally negative or positive (ranges from 0 - low valence, sounds more negative... sad, depressed, angry 
+to 100 - high valence, sounds more positive... happy, cheerful, euphoric), or fast a 
 song is. We use these scores to explore how her musical style has 
 evolved across her three career eras: early (2006-2012), mid (2013-2019), 
 and late (2020-2022). The dataset includes 263 songs.
@@ -191,7 +191,7 @@ reflecting the diversity of musical styles across Taylor Swift's catalog.**
 3. Create box plots of our continuous variables (danceability, valence, tempo) 
 to visually summarize the distribution of data, showing its center (median), 
 spread (variability), and skewness at a glance. 
-Do you notice any potential outliers? [Here's how to interpret box plots if you need a refresher.](https://leansigmacorporation.com/box-plot-with-minitab/)
+Do you notice any potential outliers? [Here's a link on how to interpret box plots if you need a refresher.](https://leansigmacorporation.com/box-plot-with-minitab/)
 
 
 ```{r swift boxplots}
@@ -399,10 +399,12 @@ ggplot(data = swift_all_songs, # specify the data source
 ```
 
 
-**Valence and danceability show a weak positive relationship, where happier-sounding 
-songs tend to be slightly more danceable. 
-Tempo shows little to no linear relationship with either variable. 
-These patterns hold across all three eras with no notable differences by group.**
+**Valence and danceability show a weak positive relationship, where 
+happier-sounding songs tend to be slightly more danceable. Tempo shows 
+a moderate negative relationship with danceability, suggesting that 
+faster songs actually tend to be rated as less danceable. Valence and 
+tempo show little to no relationship with each other. These patterns 
+hold across all three eras with no notable differences by group.**
 \
 
 ## Correlation Table
@@ -436,9 +438,12 @@ knitr::kable(corr_matrix,
 ```
 
 
-**Valence and danceability showed a moderate positive correlation, suggesting 
-happier-sounding songs tend to be more danceable. Tempo showed little relationship 
-with either variable.**
+**Valence and danceability show a small but statistically significant 
+positive correlation ($r$ = .32, $p$ < .01), confirming that happier-sounding 
+songs tend to score higher on danceability. Tempo and danceability show 
+a moderate negative correlation ($r$ = -.31, $p$ < .01), meaning faster 
+songs are actually somewhat less danceable on average. Valence and tempo 
+are essentially unrelated ($r$ = -.01, $p$ > .05).**
 \
 
 # Chocolate Bar Ratings by Cocoa Percentage
@@ -447,7 +452,7 @@ This dataset comes from [Flavors of Cacao](http://flavorsofcacao.com/chocolate_d
 bar reviews compiled since 2006. Each entry includes a rating score from 
 1 to 4, where higher scores indicate better quality. We focus on bars 
 with cocoa content of 65%, 70%, 75%, and 80% to examine whether cocoa 
-percentage is associated with perceived quality. Cocoa percentage refers to sum of the cocoa bean and any added cocoa butter content; a higher percentage (e.g., $80$%) indicates less cocoa butter (e.g., $20$%). To ensure a fair comparison across groups, we sampled an equal number of bars from each cocoa percentage level (n = 89 per group, N = 356 total).
+percentage is associated with perceived quality. Cocoa percentage refers to sum of the cocoa bean and any added cocoa butter content; a higher percentage (e.g., 80%) indicates less cocoa butter (e.g., 20%). To ensure a fair comparison across groups, we sampled an equal number of bars from each cocoa percentage level (n = 89 per group, N = 356 total).
 
 
 ```{r cocoa import and tidying, include = FALSE}
