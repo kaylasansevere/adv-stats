@@ -1,6 +1,6 @@
 ---
-title: 'Data Processing, Descriptives, Visualization, and More in R/RStudio'
-author: "Created by Kayla Sansevere for PSY207: Advanced Statistics I Lab"
+title: 'Data Processing, Descriptives, Visualization, and More in R'
+author: "Kayla Sansevere | Developed for PSY207: Advanced Statistics I Lab"
 date: "Friday, October 17, 2025"
 output:
   html_document:
@@ -8,7 +8,6 @@ output:
   word_document:
     toc: yes
 ---
-
 
 ```{r setup, include=FALSE}
 ## include = F: prevent code and results from appearing in knitted file;
@@ -25,7 +24,7 @@ rm(list=ls(all=TRUE))
 #### Load in libraries #### 
 ## Install and load packages using librarian
 if (!'librarian' %in% installed.packages()) install.packages('librarian')
-librarian::shelf(tidytuesdayR, tidyverse, psych, ggthemes, gridExtra, RColorBrewer, apaTables, wordcloud2)
+librarian::shelf(tidytuesdayR, tidyverse, psych, ggthemes, gridExtra, RColorBrewer, apaTables, wordcloud2, knitr, kableExtra)
 ## Package information:
 #tidytuesdayR: Data sets
 #tidyverse: Data manipulation & visualization
@@ -35,6 +34,8 @@ librarian::shelf(tidytuesdayR, tidyverse, psych, ggthemes, gridExtra, RColorBrew
 #RColorBrewer: Colors for data viz
 #apaTables: Correlation table
 #wordcloud2: Word clouds
+#knitr: Knitting
+#kableExtra: Table creation
 
 ## Check info including version, packages, etc
 sessionInfo()
@@ -43,27 +44,17 @@ sessionInfo()
 set.seed(207)
 ```
 
-# Taylor Swift Data
+# Taylor Swift: Danceability, Valence, and Tempo by Era
 
-[Click this
-hyperlink](https://github.com/rfordatascience/tidytuesday/blob/master/data/2023/2023-10-17/readme.md#taylor_all_songscsv)
-to view the full data dictionary for the Taylor Swift data set. For our
-convenience, here are the variables that are most important for this lab
-activity:
-
--   **danceability** ($y$): Spotify danceability score, ranges from $0$
-    (least danceable) to $100$ (most danceable)
-
--   **valence** ($x_1$): Spotify valence score, ranges from $0$ (low
-    valence, sounds more negative... sad, depressed, angry) to $100$
-    (high valence, sounds more positive... happy, cheerful, euphoric)
-
--   **tempo** ($x_2$): Overall estimated track tempo (i.e., speed or
-    pace of a given piece and derives directly from the average beat
-    duration) in beats per minute (BPM)
-
--   **era** ($x_3$): Era of the album release, denoted with $3$ levels:
-    early ($2006-2012$), mid ($2013-2019$), and late ($2020-2022$)
+This dataset contains audio features for Taylor Swift's discography, 
+sourced from Spotify's API via the [#TidyTuesday](https://github.com/rfordatascience/tidytuesday) open data project. 
+Spotify automatically generates scores for each track measuring 
+characteristics like how danceable (ranges from $0$ - least danceable to $100$ - most danceable), 
+emotionally negative or positive (ranges from $0$ - low valence, sounds more negative... sad, depressed, angry 
+to $100$ - high valence, sounds more positive... happy, cheerful, euphoric), or fast a 
+song is. We use these scores to explore how her musical style has 
+evolved across her three career eras: early (2006-2012), mid (2013-2019), 
+and late (2020-2022). The dataset includes 263 songs.
     
 ```{r swift import and tidying, include = FALSE}
 #### Import data ####
@@ -117,29 +108,49 @@ head(swift_all_songs)
 tail(swift_all_songs)
 ```
 
-\
+## Descriptive Statistics
 
-1.  First, it's important we run some preliminary analysis to better understand our data. Interpret the appropriate descriptive statistics (e.g., $M$, $SD$, $skewness$, $kurtosis$) 
+1.  First, it's important we run some preliminary analysis to better understand our data. 
+Interpret the appropriate descriptive statistics (e.g., M, SD, skewness, kurtosis) 
 for danceability, valence, and tempo.
 What do you notice about these descriptive statistics across eras?
+
 
 ```{r swift descriptives}
 ## fetch descriptives for just our subset of continuous variables
 swift_sub <- swift_all_songs[c('danceability', 'valence', 'tempo')]
-cat("Danceability, valence, and tempo descriptives:")
-psych::describe(swift_sub)
-# psych::describe(swift_all_songs) ## uncomment to see all descriptives
+
+psych::describe(swift_sub) %>%
+  knitr::kable(digits = 2, caption = "Table 1. Descriptive Statistics: Danceability, Valence, and Tempo") %>%
+  kableExtra::kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
 
 
 ## describe select continuous variables by level of categorical variable
-cat("Danceability, valence, and tempo descriptives by era:")
-psych::describe(danceability + valence + tempo ~ era, data = swift_all_songs)
+psych::describeBy(swift_all_songs[c('danceability', 'valence', 'tempo')],
+                  group = swift_all_songs$era,
+                  mat = TRUE) %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column("variable") %>%
+  mutate(variable = gsub("[0-9]+$", "", variable)) %>%
+  rename(era = group1) %>%
+  select(variable, era, n, mean, sd, median, skew, kurtosis, se) %>%
+  knitr::kable(digits = 2, caption = "Table 2. Descriptive Statistics by Era") %>%
+  kableExtra::kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
 ```
-
+ 
+ 
+**Across all songs, danceability was relatively consistent (M = 58.66, SD = 11.04) 
+and approximately normally distributed. Valence showed greater variability 
+(M = 40.46, SD = 19.55), suggesting Taylor Swift's catalog skews emotionally 
+negative. By era, mid-era songs were notably more danceable (M = 63.57) compared 
+to early (M = 58.16) and late (M = 56.60) eras.**
 \
+
+## Histograms
 
 2. Let's now look at the distribution of our continuous variables and see 
 if they're normally distributed.
+
 
 ```{r swift histograms}
 # Set up a side-by-side layout
@@ -168,12 +179,20 @@ hist(swift_all_songs$tempo, main="Tempo Distribution",
 # Here's a color cheat sheet:
 # https://www.nceas.ucsb.edu/sites/default/files/2020-04/colorPaletteCheatsheet.pdf
 ```
+
+
+**All three variables are approximately normally distributed. Danceability 
+and valence are slightly right-skewed, while tempo shows a wider spread, 
+reflecting the diversity of musical styles across Taylor Swift's catalog.**
 \
+
+## Box Plots
 
 3. Create box plots of our continuous variables (danceability, valence, tempo) 
 to visually summarize the distribution of data, showing its center (median), 
 spread (variability), and skewness at a glance. 
 Do you notice any potential outliers? [Here's how to interpret box plots if you need a refresher.](https://leansigmacorporation.com/box-plot-with-minitab/)
+
 
 ```{r swift boxplots}
 # Danceability
@@ -183,6 +202,8 @@ p1 <- ggplot(swift_all_songs, aes(y = danceability)) + ## specify data
   labs(title = "Danceability boxplot", 
        y = "Danceability Score", 
        x = NULL) +
+  ## remove x axis labels
+  scale_x_continuous(breaks = NULL) +
   ## set theme specs
   theme_minimal() +
   theme(panel.grid = element_blank()) ## remove gridlines
@@ -191,6 +212,7 @@ p1 <- ggplot(swift_all_songs, aes(y = danceability)) + ## specify data
 p2 <- ggplot(swift_all_songs, aes(y = valence)) +
   geom_boxplot(fill = "midnightblue") +
   labs(title = "Valence boxplot", y = "Valence Score", x = NULL) +
+  scale_x_continuous(breaks = NULL) +
   theme_minimal() +
   theme(panel.grid = element_blank())
 
@@ -198,17 +220,26 @@ p2 <- ggplot(swift_all_songs, aes(y = valence)) +
 p3 <- ggplot(swift_all_songs, aes(y = tempo)) +
   geom_boxplot(fill = "pink") +
   labs(title = "Tempo boxplot", y = "Tempo (BPM)", x = NULL) +
+  scale_x_continuous(breaks = NULL) +
   theme_minimal() +
   theme(panel.grid = element_blank())
 
 # Arrange plots side by side
 gridExtra::grid.arrange(p1, p2, p3, ncol = 3)
 ```
+
+
+**Danceability scores cluster tightly around 60 out of 100, with just three 
+songs falling well outside the typical range. Valence, or a measure of how 
+positive or negative a song sounds, varies much more widely, reflecting 
+the emotional range across Taylor Swift's catalog. Tempo is fairly 
+consistent, with most songs falling in a moderate speed range around 120 BPM.**
 \
 
 4. Box plots are especially useful for comparing distributions across multiple groups.
 Graph danceability, valence, and tempo by era. What do you notice?
-\
+
+
 ```{r swift more boxplots}
 # Graph danceability by era
 ggplot(data = swift_all_songs, # specify the data frame
@@ -263,10 +294,21 @@ ggplot(data = swift_all_songs, # specify the data frame
         plot.title = element_text(size = 14, face = "bold")) # type face
 ```
 
+
+**Mid-era songs tend to be the most danceable, while late-era songs score 
+slightly lower on average. That said, all three eras overlap considerably, 
+so the differences are modest. Emotional tone, as measured by valence, 
+stayed remarkably consistent across her career, where early, mid, and late era 
+songs all lean slightly negative on average. Song tempo shows a similar 
+pattern, with no meaningful differences across eras.**
 \
+
+## Scatter Plots
 
 5. Let's graph some scatter plots and examine the relationships between our continuous variables. We'll also examine scatter plots by looking at era. 
 What trends can we describe in terms of direction (i.e., positive, negative, or none), form (i.e., linear, curved, or no pattern), and strength (i.e., weak, moderate, or strong)?
+
+
 ```{r swift scatterplots}
 # Danceability x valence scatterplot
 ggplot(data = swift_all_songs, # specify the data source
@@ -356,20 +398,39 @@ ggplot(data = swift_all_songs, # specify the data source
   theme(panel.grid = element_blank()) # remove gridlines
 ```
 
+
+**Valence and danceability show a weak positive relationship, where happier-sounding 
+songs tend to be slightly more danceable. 
+Tempo shows little to no linear relationship with either variable. 
+These patterns hold across all three eras with no notable differences by group.**
 \
 
+## Correlation Table
+
 6. Let's create a correlation table of danceability, valence, and tempo to supplement the conclusions that we observed in our scatter plots.
+
+
 ```{r swift correlation}
 table1 <- apaTables::apa.cor.table(data=swift_sub,
                                    table.number=1,filename = "taylor_correlations.doc")
 print(table1)
 ```
 
+
+**Valence and danceability showed a moderate positive correlation, suggesting 
+happier-sounding songs tend to be more danceable. Tempo showed little relationship 
+with either variable.**
 \
 
-# Cocoa Data 
+# Chocolate Bar Ratings by Cocoa Percentage
 
-We have some other data this week which comes from [Flavors of Cacao](http://flavorsofcacao.com/chocolate_database.html), which contains about chocolate! Let's explore our data.
+This dataset comes from [Flavors of Cacao](http://flavorsofcacao.com/chocolate_database.html), a database of expert chocolate 
+bar reviews compiled since 2006. Each entry includes a rating score from 
+1 to 4, where higher scores indicate better quality. We focus on bars 
+with cocoa content of 65%, 70%, 75%, and 80% to examine whether cocoa 
+percentage is associated with perceived quality. Cocoa percentage refers to sum of the cocoa bean and any added cocoa butter content; a higher percentage (e.g., $80$%) indicates less cocoa butter (e.g., $20$%). To ensure a fair comparison across groups, we sampled an equal number of bars from each cocoa percentage level (n = 89 per group, N = 356 total).
+
+
 ```{r cocoa import and tidying, include = FALSE}
 #### Import data ####
 choc <- tt_load("2022-01-18")
@@ -417,33 +478,42 @@ choc_sub <- choc_sub %>%
 table(choc_sub$cocoa_percent)
 ```
 
-We are interested if **cocoa percentage** ($65$%, $70$%, $75$%, $80$%) **impacts chocolate bar ratings**. Cocoa percentage refers to sum of the cocoa bean and any added cocoa butter content; a higher percentage (e.g., $80$%) indicates less cocoa butter (e.g., $20$%). Our sample $N$ = `r nrow(choc_sub)`.
+## Descriptive Statistics
 
-1.  It's important we run some preliminary analysis to better understand our data. Interpret the appropriate descriptive statistics (e.g., $M$, $SD$, $skewness$, $kurtosis$) for chocolate bar ratings across cocoa percentage groups.
+1.  It's important we run some preliminary analysis to better understand our data. Interpret the appropriate descriptive statistics (e.g., M, SD, skewness, kurtosis) for chocolate bar ratings across cocoa percentage groups.
+
 
 ```{r cocoa descriptives}
 ## get descriptive stats overall
-cat("Descriptives of chocolate bar rating:")
-psych::describe(x = choc_sub$rating)
+psych::describe(x = choc_sub$rating) %>%
+  `rownames<-`("Cocoa Rating") %>%
+  knitr::kable(digits = 2, caption = "Table 3. Descriptive Statistics: Chocolate Bar Rating") %>%
+  kableExtra::kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
 
 ## get descriptive stats by cocoa level
-cat("Descriptives of chocolate bar rating as a product of cocoa percentage:")
-psych::describe(rating ~ cocoa_percent, data = choc_sub)
-## Here's another way you could do this:
-# rating_desc <- choc_sub %>% ##create new df
-#   group_by(cocoa_percent) %>% ##group by predictor
-#   summarise(n = length(cocoa_percent), ##group level
-#             mean = round(mean(rating),2), ##mean
-#             sd = round(sd(rating),2), ##sd
-#             skew = round(moments::skewness(rating),2), ##skewness
-#             kurtosis = round(moments::kurtosis(rating),2)) ##kurtosis
-# 
-# print(rating_desc) ##print results
+psych::describeBy(choc_sub$rating,
+                  group = choc_sub$cocoa_percent,
+                  mat = TRUE) %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column("drop") %>%
+  select(-drop, -item) %>%
+  tibble::column_to_rownames("group1") %>%
+  knitr::kable(digits = 2, caption = "Table 4. Descriptive Statistics by Cocoa Percentage") %>%
+  kableExtra::kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
 ```
 
+
+**Overall, chocolate bars received moderate ratings (M = 3.19, SD = 0.44). 
+Bars with 70% cocoa content received the highest average ratings (M = 3.33), 
+while 80% cocoa bars rated lowest (M = 3.08), suggesting a preference for 
+moderate cocoa intensity in this sample.**
 \
 
+## Histogram
+
 2. Let's look at a histogram to supplement our conclusions from the descriptive statistics and check if chocolate bar ratings are normally distributed.
+
+
 ```{r cocoa histogram}
 # Create a histogram using base R
 hist(choc_sub$rating, # specify the variable
@@ -454,10 +524,19 @@ hist(choc_sub$rating, # specify the variable
      xlim=c(1, 4)) # x axis limits
 ```
 
+
+**Chocolate bar ratings are approximately normally distributed, with most 
+ratings clustering between 3.0 and 3.5. The distribution is slightly 
+left-skewed, indicating that very low ratings are relatively rare in 
+this sample.**
+
 \
+
+## Box Plot
 
 3. Now let's examine a box plot of chocolate bar ratings by cocoa percentage.
 What trends do you notice?
+
 
 ```{r cocoa boxplot}
 # Graph bar rating by cocoa percentage
@@ -480,9 +559,18 @@ ggplot(data = choc_sub, # specify the data frame
 # Run this in your console for a better view
 # RColorBrewer::display.brewer.all()
 ```
+
+
+**Bars with 70% cocoa content received the highest median ratings, while 
+80% cocoa bars were rated lowest. The spread of ratings is similar across 
+groups, suggesting cocoa percentage has a modest effect on perceived quality.**
 \
 
+## Word Cloud
+
 4. What words are used most commonly used to describe our sample of chocolate?
+
+
 ```{r cocoa wordcloud}
 ## Prepare the data
 # example: choc_sub$most_memorable_characteristics is a character vector
@@ -507,3 +595,14 @@ freq <- tokens %>% count(token, sort = TRUE)
 ## basic interactive wordcloud
 wordcloud2::wordcloud2(freq, size = 1) # size adjusts scaling
 ```
+
+
+**The most frequently used descriptors center on richness and depth of flavor. 
+"Sweet," "cocoa," "creamy," and "nutty" dominate the cloud, suggesting raters 
+most often experienced these bars as smooth and approachable. "Roasty," 
+"earthy," and "molasses" also appear prominently, pointing to a darker, 
+more complex flavor profile in a significant portion of the sample. More 
+negative descriptors like "bitter," "fatty," and "sour" are present but 
+smaller, indicating they were less universally experienced. Overall, the 
+language skews positive, with flavor complexity and natural sweetness 
+emerging as the defining characteristics of higher cocoa percentage bars.**
